@@ -1854,10 +1854,7 @@ ios_application(
     resources = [
         ":LaunchScreen",
         #":DefaultAppIcon",
-    ],
-    # PluginsEngine: Python SDK (stdlib + extera_compat) в бандле приложения
-    # structured — сохраняет структуру папок (plugins-sdk/python/...).
-    structured_resources = [
+        # PluginsEngine: Python SDK одним tar-файлом (распаковывается рантаймом)
         "//submodules/PluginsEngine:PythonSdkBundle",
     ],
     frameworks = [

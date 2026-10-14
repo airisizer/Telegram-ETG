@@ -36,6 +36,8 @@ jobs:
           # plugins-sdk/python/lib/python3.14 (PYTHONHOME на девайсе = sdk/python)
           mkdir -p submodules/PluginsEngine/sdk/python/lib
           cp -R /tmp/python-ios/Python.xcframework/lib/python3.14 submodules/PluginsEngine/sdk/python/lib/python3.14
+          # Пакуем весь SDK в один tar (ios_application не умеет structured_resources)
+          tar -cf submodules/PluginsEngine/plugins-sdk.tar -C submodules/PluginsEngine/sdk .
 
       - name: Create canonical source directory
         run: |

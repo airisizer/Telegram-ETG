@@ -296,25 +296,22 @@ public final class PythonRuntime {
 
     private func unpackSdkIfNeeded() throws {
         let fm = FileManager.default
-        let dst = sdkDir.appendingPathComponent("python")
         let marker = sdkDir.appendingPathComponent("v.txt")
-        // structured_resources кладёт файлы с путями пакета — ищем корень SDK
-        // по кандидатам (порядок: плоский → bazel-путь → ресурсы).
+        // plugins-sdk.tar лежит в корне бандла (resources плющат структуру).
         let bundleRoot = Bundle.main.bundleURL
         let candidates = [
-            bundleRoot.appendingPathComponent("plugins-sdk"),
-            bundleRoot.appendingPathComponent("submodules/PluginsEngine/sdk"),
-            bundleRoot.appendingPathComponent("Frameworks/PluginsEngine.framework/sdk"),
+            bundleRoot.appendingPathComponent("plugins-sdk.tar"),
+            bundleRoot.appendingPathComponent("Frameworks/PluginsEngine.framework/plugins-sdk.tar"),
         ]
-        guard let bundleSdk = candidates.first(where: { fm.fileExists(atPath: $0.path) }) else {
+        guard let tarURL = candidates.first(where: { fm.fileExists(atPath: $0.path) }) else {
             throw PluginError.pythonNotAvailable
         }
-        let bundleV = (try? String(contentsOf: bundleSdk.appendingPathComponent("v.txt"))) ?? ""
+        // Версия SDK внутри tar (v.txt наверху архива) — сравниваем с распакованной.
         let installedV = (try? String(contentsOf: marker)) ?? ""
-        if bundleV == installedV, fm.fileExists(atPath: dst.path) { return }
+        if !installedV.isEmpty, fm.fileExists(atPath: sdkDir.appendingPathComponent("python").path) { return }
 
         if fm.fileExists(atPath: sdkDir.path) { try fm.removeItem(at: sdkDir) }
-        try fm.copyItem(at: bundleSdk, to: sdkDir)
+        try TarUnpacker.unpack(tarAt: tarURL, to: sdkDir)
     }
 }
 

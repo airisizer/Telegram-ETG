@@ -60,10 +60,11 @@ apple_static_xcframework_import(
     visibility = ["//visibility:public"],
 )
 
-# Python-совместимый слой (extera SDK) + маркер версии.
-# Python-stdlib и бинарь CPython кладёт сюда CI-шаг (в sdk/python/).
+# Python-совместимый слой (extera SDK) + stdlib — ОДНИМ tar-файлом.
+# plugins-sdk.tar собирается CI-шагом (sdk/ → tar); локальная сборка без
+# Python просто не включит ресурс (allow_empty) — движок сам отключится.
 filegroup(
     name = "PythonSdkBundle",
-    srcs = glob(["sdk/**"], allow_empty = True),
+    srcs = glob(["plugins-sdk.tar"], allow_empty = True),
     visibility = ["//visibility:public"],
 )
