@@ -1,5 +1,6 @@
 load("@build_bazel_rules_swift//swift:swift.bzl", "swift_library")
-load("@build_bazel_rules_apple//apple:apple.bzl", "apple_static_xcframework_import")
+load("@rules_cc//cc:objc_library.bzl", "objc_library")
+load("@build_bazel_rules_apple//apple:apple.bzl", "apple_dynamic_xcframework_import")
 
 # C-бридж Python→Swift (нативный CPython-модуль _etg).
 # Заголовки CPython подкладывает CI (Python.xcframework из BeeWare).
@@ -51,7 +52,7 @@ swift_library(
 
 # Статическая CPython-библиотека (xcframework кладётся CI-шагом в
 # third-party/python/). Линкуется в приложение.
-apple_static_xcframework_import(
+apple_dynamic_xcframework_import(
     name = "PythonLib",
     xcframework_imports = glob(
         ["third_party_python/Python.xcframework/**"],
