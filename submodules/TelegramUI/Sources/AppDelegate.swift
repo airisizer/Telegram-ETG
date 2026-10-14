@@ -2,6 +2,7 @@ import UIKit
 import SwiftSignalKit
 import Display
 import TelegramCore
+import PluginsEngine
 import UserNotifications
 import Intents
 import Postbox
@@ -689,6 +690,10 @@ private func extractAccountManagerState(records: AccountRecordsView<TelegramAcco
             self.mainWindow?.presentNative(UIAlertController(title: nil, message: "Error 2", preferredStyle: .alert))
             return true
         }
+
+        // === PluginsEngine: старт движка плагинов (CPython + extera-совместимость) ===
+        PluginController.shared.initialize()
+        PluginController.shared.fireAppEvent("app_start")
         
         var isDebugConfiguration = false
         #if DEBUG

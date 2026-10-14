@@ -8,7 +8,7 @@ on:
 
 jobs:
   build:
-    runs-on: macos-13
+    runs-on: macos-26
 
     steps:
       - uses: actions/checkout@v2
@@ -20,6 +20,26 @@ jobs:
         run: |
           XCODE_VERSION=$(cat versions.json | python3 -c 'import json,sys;obj=json.load(sys.stdin);print(obj["xcode"]);')
           sudo xcode-select -s /Applications/Xcode_$XCODE_VERSION.app/Contents/Developer
+
+      - name: Stage embedded CPython (BeeWare Python-Apple-support)
+        run: |
+          set -x
+          cd $GITHUB_WORKSPACE
+          # Скачиваем официальный iOS-саппорт CPython (Python.xcframework + stdlib)
+          curl -sL -o /tmp/python-ios.tar.gz \
+            "https://github.com/beeware/Python-Apple-support/releases/download/3.14-b10/Python-3.14-iOS-support.b10.tar.gz"
+          mkdir -p /tmp/python-ios && tar -xzf /tmp/python-ios.tar.gz -C /tmp/python-ios
+          # Python.xcframework → линкуется в приложение (PluginsEngine:PythonLib)
+          XCFW=$(find /tmp/python-ios -maxdepth 3 -name "Python.xcframework" -type d | head -1)
+          mkdir -p submodules/PluginsEngine/third_party_python
+          cp -R "$XCFW" submodules/PluginsEngine/third_party_python/Python.xcframework
+          # stdlib → ресурс plugins-sdk/python/stdlib (распаковывается на девайсе)
+          STDLIB=$(find /tmp/python-ios -maxdepth 4 -type d -name "python-stdlib" | grep -i "ios-arm64/" | head -1)
+          mkdir -p submodules/PluginsEngine/sdk/python
+          cp -R "$STDLIB" submodules/PluginsEngine/sdk/python/stdlib
+          # dynload-модули (если есть)
+          DYNLOAD=$(find /tmp/python-ios -maxdepth 5 -type d -name "lib-dynload" | grep -i "ios-arm64/" | head -1)
+          if [ -n "$DYNLOAD" ]; then cp -R "$DYNLOAD" submodules/PluginsEngine/sdk/python/lib-dynload; fi
 
       - name: Create canonical source directory
         run: |

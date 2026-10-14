@@ -233,6 +233,7 @@ swift_library(
         "//submodules/ItemListVenueItem:ItemListVenueItem",
         "//submodules/SemanticStatusNode:SemanticStatusNode",
         "//submodules/AccountUtils:AccountUtils",
+        "//submodules/PluginsEngine:PluginsEngine",
         "//submodules/Svg/LegacyImpl",
         "//submodules/ManagedAnimationNode:ManagedAnimationNode",
         "//submodules/TooltipUI:TooltipUI",

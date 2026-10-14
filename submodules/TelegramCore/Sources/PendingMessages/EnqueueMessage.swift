@@ -694,7 +694,33 @@ private func opportunisticallyTransformOutgoingMedia(network: Network, postbox: 
     return combineLatest(signals)
 }
 
+// === PluginsEngine: точка встраивания "message.send.before" ===
+// Инверсия зависимостей: PluginsEngine (модуль уровнем выше) присваивает
+// handler при старте; TelegramCore про движок ничего не знает (нет цикла
+// зависимостей в Bazel). Аналог Android-хука SendMessagesHelper#sendMessage:
+// плагин может изменить текст (payload["text"]) или отменить (result == nil).
+public enum PluginSendMessageHook {
+    public static var handler: (([String: Any]) -> [String: Any]?)?
+}
+
 public func enqueueMessages(account: Account, peerId: PeerId, messages: [EnqueueMessage]) -> Signal<[MessageId?], NoError> {
+    let messages: [EnqueueMessage] = {
+        guard let handler = PluginSendMessageHook.handler else { return messages }
+        return messages.compactMap { message in
+            switch message {
+            case let .message(text, attributes, inlineStickers, mediaReference, threadId, replyToMessageId, replyToStoryId, localGroupingKey, correlationId, bubbleUpEmojiOrStickersets):
+                let payload: [String: Any] = ["text": text, "peer_id": peerId.toInt64(), "thread_id": threadId as Any]
+                guard let result = handler(payload) else { return nil } // CANCEL
+                let newText = result["text"] as? String ?? text
+                return .message(text: newText, attributes: attributes, inlineStickers: inlineStickers, mediaReference: mediaReference, threadId: threadId, replyToMessageId: replyToMessageId, replyToStoryId: replyToStoryId, localGroupingKey: localGroupingKey, correlationId: correlationId, bubbleUpEmojiOrStickersets: bubbleUpEmojiOrStickersets)
+            case .forward:
+                return message
+            }
+        }
+    }()
+    if messages.isEmpty {
+        return .single(Array<MessageId?>(repeating: nil, count: 0))
+    }
     let signal: Signal<[(Bool, EnqueueMessage)], NoError>
     if let transformOutgoingMessageMedia = account.transformOutgoingMessageMedia {
         signal = opportunisticallyTransformOutgoingMedia(network: account.network, postbox: account.postbox, transformOutgoingMessageMedia: transformOutgoingMessageMedia, messages: messages, userInteractive: true)

@@ -4,6 +4,7 @@ import Display
 import SwiftSignalKit
 import TelegramCore
 import MtProtoKit
+import PluginsEngine
 import MessageUI
 import TelegramPresentationData
 import TelegramUIPreferences
@@ -198,6 +199,7 @@ private enum DebugControllerEntry: ItemListNodeEntry {
     case versionInfo(PresentationTheme)
     case collectCpuProfile
     case sendProfileLogs
+    case plugins
     
     var section: ItemListSectionId {
         switch self {
@@ -219,7 +221,7 @@ private enum DebugControllerEntry: ItemListNodeEntry {
             return DebugControllerSection.translation.rawValue
         case .disableVideoAspectScaling, .enableNetworkFramework, .enableNetworkExperiments, .rustMTProtoEngine, .networkEngineInfo:
             return DebugControllerSection.videoExperiments2.rawValue
-        case .hostInfo, .versionInfo:
+        case .hostInfo, .versionInfo, .plugins:
             return DebugControllerSection.info.rawValue
         case .collectCpuProfile, .sendProfileLogs:
             return DebugControllerSection.profiling.rawValue
@@ -378,6 +380,8 @@ private enum DebugControllerEntry: ItemListNodeEntry {
             return 108
         case .sendProfileLogs:
             return 109
+        case .plugins:
+            return 110
         }
     }
     
@@ -1681,6 +1685,11 @@ private enum DebugControllerEntry: ItemListNodeEntry {
             let bundleVersion = bundle.infoDictionary?["CFBundleShortVersionString"] ?? ""
             let bundleBuild = bundle.infoDictionary?[kCFBundleVersionKey as String] ?? ""
             return ItemListTextItem(presentationData: presentationData, text: .plain("\(bundleId)\n\(bundleVersion) (\(bundleBuild))"), sectionId: self.section)
+        case .plugins:
+            // PluginsEngine: менеджер плагинов (exteraGram-совместимый движок).
+            return ItemListDisclosureItem(presentationData: presentationData, systemStyle: .glass, title: "Plugins", label: "", sectionId: self.section, style: .blocks, action: {
+                PluginUIFacade.presentPluginsList()
+            })
         case .collectCpuProfile:
             return ItemListActionItem(presentationData: presentationData, systemStyle: .glass, title: "Collect CPU Profile (10s)", kind: .generic, alignment: .natural, sectionId: self.section, style: .blocks, action: {
                 let presentationData = arguments.sharedContext.currentPresentationData.with { $0 }
@@ -1931,6 +1940,7 @@ private func debugControllerEntries(context: AccountContext?, sharedContext: Sha
     if let backupHostOverride = networkSettings?.backupHostOverride {
         entries.append(.hostInfo(presentationData.theme, "Host: \(backupHostOverride)"))
     }
+    entries.append(.plugins)
     entries.append(.versionInfo(presentationData.theme))
     
     entries.append(.collectCpuProfile)

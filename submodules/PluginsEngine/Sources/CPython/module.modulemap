@@ -1,0 +1,6 @@
+module CPython [system] {
+    // Заголовки CPython из Python.xcframework (скачивается в CI,
+    // BeeWare Python-Apple-support). Путь задаётся через BAZEL copts.
+    header "shim/Python.h"
+    export *
+}
