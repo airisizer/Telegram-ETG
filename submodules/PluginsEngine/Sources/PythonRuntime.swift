@@ -164,7 +164,7 @@ public final class PythonRuntime {
         return out
     }
 
-    public func callMenuItem(pluginId: String, itemId: String, context: [String, Any]) {
+    public func callMenuItem(pluginId: String, itemId: String, context: [String: Any]) {
         guard started, let ctxJson = toJson(context) else { return }
         try? withGIL {
             PyRun_SimpleString("""

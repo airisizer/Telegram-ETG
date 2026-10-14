@@ -17,16 +17,17 @@ objc_library(
     visibility = ["//visibility:public"],
 )
 
-# Заголовки CPython как clang-модуль для Swift (import CPython).
+# Заголовки CPython как clang-модуль для Swift (import CPython):
+# umbrella-header CPython.h реэкспортирует <Python.h>; module map
+# генерирует сам Bazel (свой .modulemap в hdrs ломает сборку).
 objc_library(
     name = "CPython",
-    hdrs = glob(["Sources/CPython/**/*"]),
+    hdrs = ["Sources/CPython/include/CPython/CPython.h"],
     copts = [
         "-Isubmodules/PluginsEngine/third_party_python/Python.xcframework/ios-arm64/Python.framework/Headers",
     ],
-    includes = ["Sources/CPython"],
+    includes = ["Sources/CPython/include"],
     module_name = "CPython",
-    textual_hdrs = [],
     visibility = ["//visibility:public"],
 )
 
