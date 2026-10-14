@@ -1863,8 +1863,6 @@ ios_application(
         ":PostboxFramework",
         ":TelegramCoreFramework",
         ":TelegramUIFramework",
-        # PluginsEngine: встроенный CPython (динамический фреймворк из xcframework)
-        "//submodules/PluginsEngine:PythonLib",
     ],
     strings = [
         ":AppStringResources",
@@ -1890,6 +1888,9 @@ ios_application(
     deps = [
         ":Main",
         ":Lib",
+        # PluginsEngine: встроенный CPython — dynamic xcframework в deps
+        # (линкуется и эмбеддится через AppleDynamicFrameworkInfo).
+        "//submodules/PluginsEngine:PythonLib",
     ],
     visibility = ["//visibility:public"],
 )
