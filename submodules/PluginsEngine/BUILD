@@ -7,12 +7,19 @@ load("@build_bazel_rules_apple//apple:apple.bzl", "apple_dynamic_xcframework_imp
 objc_library(
     name = "ETGBridge",
     srcs = ["Sources/ETGBridge/PythonBridge.c"],
-    hdrs = ["Sources/ETGBridge/include/PythonBridge.h"],
+    hdrs = ["Sources/ETGBridge/include/PythonBridge.h"] + glob(
+        ["third_party_python/Python.xcframework/ios-arm64/Python.framework/Headers/**/*.h"],
+        allow_empty = True,
+    ),
     copts = [
-        # Путь к заголовкам CPython внутри xcframework (arm64-слайс для девайса).
-        "-Isubmodules/PluginsEngine/third_party_python/Python.xcframework/ios-arm64/Python.framework/Headers",
+        # includes ниже (package-relative) — их Bazel прокидывает в модульную
+        # компиляцию зависимых таргетов; copts -I этого не делает.
     ],
-    includes = ["Sources/ETGBridge/include"],
+    includes = [
+        "Sources/ETGBridge/include",
+        # Заголовки CPython из xcframework (CI стейджит внутрь пакета).
+        "third_party_python/Python.xcframework/ios-arm64/Python.framework/Headers",
+    ],
     module_name = "ETGBridge",
     visibility = ["//visibility:public"],
 )
@@ -22,11 +29,16 @@ objc_library(
 # генерирует сам Bazel (свой .modulemap в hdrs ломает сборку).
 objc_library(
     name = "CPython",
-    hdrs = ["Sources/CPython/include/CPython/CPython.h"],
-    copts = [
-        "-Isubmodules/PluginsEngine/third_party_python/Python.xcframework/ios-arm64/Python.framework/Headers",
+    # Заголовки фреймворка декларируем как hdrs — иначе Bazel-сэндбокс
+    # их не увидит (undeclared inputs).
+    hdrs = ["Sources/CPython/include/CPython/CPython.h"] + glob(
+        ["third_party_python/Python.xcframework/ios-arm64/Python.framework/Headers/**/*.h"],
+        allow_empty = True,
+    ),
+    includes = [
+        "Sources/CPython/include",
+        "third_party_python/Python.xcframework/ios-arm64/Python.framework/Headers",
     ],
-    includes = ["Sources/CPython/include"],
     module_name = "CPython",
     visibility = ["//visibility:public"],
 )
